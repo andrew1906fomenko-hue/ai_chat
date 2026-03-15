@@ -1,0 +1,5 @@
+flask
+requests
+duckduckgo_search
+PyPDF2
+gunicorn

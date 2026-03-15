@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>AI Chat</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+display:flex;
+height:100vh;
+background:#111;
+color:white;
+}
+
+#sidebar{
+width:250px;
+background:#1a1a1a;
+padding:10px;
+}
+
+#newchat{
+width:100%;
+padding:10px;
+}
+
+.chatItem{
+padding:10px;
+background:#333;
+margin-top:5px;
+cursor:pointer;
+}
+
+#main{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+#chat{
+flex:1;
+overflow:auto;
+padding:20px;
+}
+
+.msg{
+margin:10px;
+padding:10px;
+border-radius:8px;
+max-width:700px;
+}
+
+.user{background:#333;}
+.ai{background:#222;}
+
+#inputArea{
+display:flex;
+padding:10px;
+border-top:1px solid #333;
+}
+
+#text{
+flex:1;
+padding:10px;
+}
+
+button{
+margin-left:10px;
+padding:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="sidebar">
+
+<button id="newchat">New Chat</button>
+
+<div id="chats"></div>
+
+</div>
+
+<div id="main">
+
+<div id="chat"></div>
+
+<div id="inputArea">
+
+<input id="text">
+
+<button onclick="send()">Send</button>
+
+<input type="file" id="pdf">
+
+</div>
+
+</div>
+
+<script>
+
+let chatId=Math.random().toString(36)
+
+function newChat(){
+
+chatId=Math.random().toString(36)
+
+document.getElementById("chat").innerHTML=""
+
+}
+
+document.getElementById("newchat").onclick=newChat
+
+async function send(){
+
+let input=document.getElementById("text")
+let text=input.value
+
+if(!text) return
+
+input.value=""
+
+chat.innerHTML+=`<div class="msg user">${text}</div>`
+
+let ai=document.createElement("div")
+ai.className="msg ai"
+ai.textContent="..."
+
+chat.appendChild(ai)
+
+let res=await fetch("/chat",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+message:text,
+chat:chatId
+})
+})
+
+const reader=res.body.getReader()
+const decoder=new TextDecoder()
+
+while(true){
+
+const {value,done}=await reader.read()
+
+if(done) break
+
+ai.textContent+=decoder.decode(value)
+
+chat.scrollTop=chat.scrollHeight
+
+}
+
+}
+
+document.getElementById("pdf").addEventListener("change",async function(){
+
+let file=this.files[0]
+
+let form=new FormData()
+
+form.append("file",file)
+
+let r=await fetch("/upload",{method:"POST",body:form})
+
+let data=await r.json()
+
+document.getElementById("text").value="Ответь по этому тексту:\n"+data.text
+
+})
+
+</script>
+
+</body>
+</html>
